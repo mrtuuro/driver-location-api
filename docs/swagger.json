@@ -1,0 +1,276 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "Stores driver coordinates and returns nearest drivers",
+        "title": "Driver Location API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "basePath": "/v1",
+    "paths": {
+        "/v1/drivers": {
+            "post": {
+                "security": [
+                    {
+                        "InternalAuth": []
+                    }
+                ],
+                "description": "Accepts an array of driver GeoJSON points and stores them.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "drivers"
+                ],
+                "summary": "Bulk-insert driver coordinates",
+                "parameters": [
+                    {
+                        "description": "Drivers payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.AddDriversRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/response.SwaggerSuccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.SwaggerError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.SwaggerError"
+                        }
+                    },
+                    "422": {
+                        "description": "Unprocessable Entity",
+                        "schema": {
+                            "$ref": "#/definitions/response.SwaggerError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.SwaggerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/drivers/search": {
+            "post": {
+                "security": [
+                    {
+                        "InternalAuth": []
+                    }
+                ],
+                "description": "Returns drivers ordered by distance; distance (metres) is pre-calculated.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "drivers"
+                ],
+                "summary": "Find nearest drivers",
+                "parameters": [
+                    {
+                        "description": "Search parameters",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.SearchDriverRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of DriverWithDistance",
+                        "schema": {
+                            "$ref": "#/definitions/response.SwaggerSuccess"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.SwaggerError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.SwaggerError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.SwaggerError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.SwaggerError"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/healthz": {
+            "get": {
+                "description": "Returns 200 OK with a success envelope; used by load-balancers and orchestrators.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "Liveness probe",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.SwaggerSuccess"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "handler.AddDriversRequest": {
+            "type": "object",
+            "required": [
+                "drivers"
+            ],
+            "properties": {
+                "drivers": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/handler.DriverLocationDTO"
+                    }
+                }
+            }
+        },
+        "handler.DriverLocationDTO": {
+            "type": "object",
+            "required": [
+                "driverId",
+                "location"
+            ],
+            "properties": {
+                "driverId": {
+                    "type": "string"
+                },
+                "location": {
+                    "$ref": "#/definitions/handler.GeoPointDTO"
+                }
+            }
+        },
+        "handler.GeoPointDTO": {
+            "type": "object",
+            "required": [
+                "coordinates",
+                "type"
+            ],
+            "properties": {
+                "coordinates": {
+                    "type": "array",
+                    "maxItems": 180,
+                    "minItems": -180,
+                    "items": {
+                        "type": "number"
+                    }
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "handler.SearchDriverRequest": {
+            "type": "object",
+            "required": [
+                "location",
+                "radius"
+            ],
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "location": {
+                    "$ref": "#/definitions/handler.GeoPointDTO"
+                },
+                "radius": {
+                    "type": "number"
+                }
+            }
+        },
+        "response.APIError": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.SwaggerError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/response.APIError"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.SwaggerSuccess": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "data": {},
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "InternalAuth": {
+            "description": "Internal calls only.  Format: \"Bearer \u003ctoken\u003e\"",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

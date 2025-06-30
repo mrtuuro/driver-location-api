@@ -1,0 +1,181 @@
+basePath: /v1
+definitions:
+  handler.AddDriversRequest:
+    properties:
+      drivers:
+        items:
+          $ref: '#/definitions/handler.DriverLocationDTO'
+        minItems: 1
+        type: array
+    required:
+    - drivers
+    type: object
+  handler.DriverLocationDTO:
+    properties:
+      driverId:
+        type: string
+      location:
+        $ref: '#/definitions/handler.GeoPointDTO'
+    required:
+    - driverId
+    - location
+    type: object
+  handler.GeoPointDTO:
+    properties:
+      coordinates:
+        items:
+          type: number
+        maxItems: 180
+        minItems: -180
+        type: array
+      type:
+        type: string
+    required:
+    - coordinates
+    - type
+    type: object
+  handler.SearchDriverRequest:
+    properties:
+      limit:
+        type: integer
+      location:
+        $ref: '#/definitions/handler.GeoPointDTO'
+      radius:
+        type: number
+    required:
+    - location
+    - radius
+    type: object
+  response.APIError:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+  response.SwaggerError:
+    properties:
+      error:
+        $ref: '#/definitions/response.APIError'
+      success:
+        type: boolean
+    type: object
+  response.SwaggerSuccess:
+    properties:
+      code:
+        type: string
+      data: {}
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+info:
+  contact: {}
+  description: Stores driver coordinates and returns nearest drivers
+  title: Driver Location API
+  version: "1.0"
+paths:
+  /v1/drivers:
+    post:
+      consumes:
+      - application/json
+      description: Accepts an array of driver GeoJSON points and stores them.
+      parameters:
+      - description: Drivers payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.AddDriversRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.SwaggerSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.SwaggerError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.SwaggerError'
+        "422":
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/response.SwaggerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.SwaggerError'
+      security:
+      - InternalAuth: []
+      summary: Bulk-insert driver coordinates
+      tags:
+      - drivers
+  /v1/drivers/search:
+    post:
+      consumes:
+      - application/json
+      description: Returns drivers ordered by distance; distance (metres) is pre-calculated.
+      parameters:
+      - description: Search parameters
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handler.SearchDriverRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of DriverWithDistance
+          schema:
+            $ref: '#/definitions/response.SwaggerSuccess'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.SwaggerError'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.SwaggerError'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.SwaggerError'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.SwaggerError'
+      security:
+      - InternalAuth: []
+      summary: Find nearest drivers
+      tags:
+      - drivers
+  /v1/healthz:
+    get:
+      consumes:
+      - application/json
+      description: Returns 200 OK with a success envelope; used by load-balancers
+        and orchestrators.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SwaggerSuccess'
+      summary: Liveness probe
+      tags:
+      - system
+securityDefinitions:
+  InternalAuth:
+    description: 'Internal calls only.  Format: "Bearer <token>"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
