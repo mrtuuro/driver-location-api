@@ -9,7 +9,7 @@ import (
 )
 
 func Register(app *application.Application) {
-	app.E.GET("/healthz", handler.HealthcheckHandler(app)).Name = "Healthcheck"
+	app.E.GET("/v1/healthz", handler.HealthcheckHandler(app)).Name = "Healthcheck"
 
 	protected := app.E.Group("/v1")
 	protected.Use(middleware.CustomMiddleware(app))
