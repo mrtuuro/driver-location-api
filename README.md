@@ -49,7 +49,7 @@ vim .env
 make help
 
 # run the service
-make run                      # regenerates Swagger, builds, starts on :8080
+make run                      # regenerates Swagger, builds, starts on <your-port>
 
 # seed initial driver CSV
 make import                   # uses tools/importer/main.go
